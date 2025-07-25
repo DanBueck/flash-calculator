@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="manifest" href="manifest.json">
+  <title>Manual Flash Calculator</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 1rem;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+    }
+    .result {
+      font-size: 1.2rem;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .slider-display {
+      text-align: center;
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Manual Flash Calculator</h2>
+
+  <label for="gn">Guide Number (full power, ISO 100):</label>
+  <input type="number" id="gn" placeholder="e.g. 15" value="15" />
+
+  <label for="power">Flash Power:</label>
+  <select id="power">
+    <option value="1">Full</option>
+    <option value="0.5">1/2</option>
+    <option value="0.25">1/4</option>
+    <option value="0.125">1/8</option>
+    <option value="0.0625">1/16</option>
+    <option value="0.03125">1/32</option>
+    <option value="0.015625">1/64</option>
+  </select>
+
+  <label for="iso">ISO:</label>
+  <input type="number" id="iso" placeholder="e.g. 100" value="100" />
+
+  <label for="mode">Calculate:</label>
+  <select id="mode">
+    <option value="aperture">Aperture (f-number)</option>
+    <option value="distance">Distance (meters)</option>
+  </select>
+
+  <label id="inputLabel" for="inputRange">Aperture (f-number):</label>
+  <div class="slider-display">Value: <span id="inputValueDisplay">4.0</span></div>
+  <input type="range" id="inputRange" min="1" max="22" step="0.1" value="4" oninput="updateSliderValue()">
+
+  <div class="result" id="result">Result will appear here.</div>
+
+  <script>
+    function calculate() {
+      const gn = parseFloat(document.getElementById('gn').value);
+      const iso = parseFloat(document.getElementById('iso').value);
+      const power = parseFloat(document.getElementById('power').value);
+      const mode = document.getElementById('mode').value;
+      const inputValue = parseFloat(document.getElementById('inputRange').value);
+
+      if (isNaN(gn) || isNaN(iso) || isNaN(power) || isNaN(inputValue)) {
+        document.getElementById('result').innerText = "Please fill in all values.";
+        return;
+      }
+
+      const adjustedGN = gn * Math.sqrt(iso / 100) * Math.sqrt(power);
+      let resultText = '';
+
+      if (mode === 'aperture') {
+        const aperture = adjustedGN / inputValue;
+        resultText = `Aperture (f): f/${aperture.toFixed(2)}`;
+      } else {
+        const distance = adjustedGN / inputValue;
+        resultText = `Distance: ${distance.toFixed(2)} meters`;
+      }
+
+      document.getElementById('result').innerText = resultText;
+    }
+
+    function updateSliderValue() {
+      const val = parseFloat(document.getElementById('inputRange').value);
+      document.getElementById('inputValueDisplay').innerText = val.toFixed(1);
+      calculate();
+    }
+
+    function updateSliderAndLabel() {
+      const mode = document.getElementById('mode').value;
+      const inputRange = document.getElementById('inputRange');
+      const inputLabel = document.getElementById('inputLabel');
+
+      if (mode === 'aperture') {
+        inputLabel.innerText = 'Distance (meters):';
+        inputRange.min = 0.5;
+        inputRange.max = 20;
+        inputRange.step = 0.5;
+        inputRange.value = 3;
+      } else {
+        inputLabel.innerText = 'Aperture (f-number):';
+        inputRange.min = 1;
+        inputRange.max = 22;
+        inputRange.step = 0.1;
+        inputRange.value = 4;
+      }
+
+      updateSliderValue();
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+
+    document.getElementById('mode').addEventListener('change', updateSliderAndLabel);
+    window.addEventListener('DOMContentLoaded', updateSliderAndLabel);
+  </script>
+</body>
+</html>
